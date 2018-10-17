@@ -4,13 +4,16 @@ using System.Text;
 using System.Net.Http;
 using System.Net.Http.Headers;
 
+public enum RequestType { POST,GET }
+public enum Api { addUser}
+
 namespace OpenJiraTerminal
 {
     class ConnectionHandler
     {
         private string loginCredentials;
 
-        private string url;
+        public string url;
 
         private string query;
 
@@ -19,7 +22,7 @@ namespace OpenJiraTerminal
         public ConnectionHandler(string url, string loginCredentials)
         {
             this.url = PrepareUrl(url);
-            
+            this.loginCredentials = loginCredentials;
             GetHttpClient();
         }
 
@@ -52,23 +55,47 @@ namespace OpenJiraTerminal
             return Convert.ToBase64String(plainbytes);
         }
 
-        private string QueryServer(string query)
+        public string QueryServer(RequestType type ,string query, string jsonObject = null)
         {
-            try
+
+            if(type == RequestType.GET)
             {
-                var response = httpClient.GetAsync(query).Result;
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    string result = response.Content.ReadAsStringAsync().Result;
-                    return result;
+                    var response = httpClient.GetAsync(query).Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string result = response.Content.ReadAsStringAsync().Result;
+                        return result;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception e)
+                {
+                    Console.Write(e.Message + " | An error occured while querying the server");
+                    return null;
+                }
             }
-            catch(Exception e)
+            else
             {
-                Console.Write(e.Message + " | An error occured while querying the server");
-                return null;
+                try
+                {
+                    var response = httpClient.PostAsync(query, new StringContent(jsonObject,Encoding.UTF8,"application/json")).Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string result = response.Content.ReadAsStringAsync().Result;
+                        return result;
+                    }
+                    return null;
+                }
+                catch (Exception e)
+                {
+                    Console.Write(e.Message + " | failed to query server");
+                    return null;
+                }
             }
+
+            
         }
 
         #region url prep

@@ -6,6 +6,11 @@ using Newtonsoft.Json;
 
 namespace OpenJiraTerminal
 {
+    enum JsonObjectType
+    {
+        AddUserResponse
+    }
+
     class JsonConverter
     {
         public string BuildJsonFromObject(object obj)
@@ -14,9 +19,14 @@ namespace OpenJiraTerminal
             return JsonConvert.SerializeObject(obj);
         }
 
-        public object BuildObjectFromJson(string json)
+        public object BuildObjectFromJson(JsonObjectType type, string json)
         {
             if (json == null) return null;
+            switch (type)
+            {
+                case JsonObjectType.AddUserResponse:
+                    return JsonConvert.DeserializeObject<CreateUserResponseJson>(json);
+            }
             return null;
         }
 
