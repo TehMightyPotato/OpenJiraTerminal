@@ -1,2 +1,5 @@
 # OpenJiraTerminal
-A work in progress alternative to very costly jira-plugins to directly communicate with the jira-REST API
+A work in progress Jira command line interface for my special needs.
+
+##Features
+*adding Users (single or bulk via csv)
