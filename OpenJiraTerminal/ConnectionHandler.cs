@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 
 public enum RequestType { POST,GET }
-public enum Api { addUser}
+public enum Api { addUser,createProject,getProjects,assignProjectRole}
 
 namespace OpenJiraTerminal
 {

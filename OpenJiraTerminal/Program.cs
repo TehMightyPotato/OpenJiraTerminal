@@ -55,13 +55,13 @@ namespace OpenJiraTerminal
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine(e.Message + "lelol");
+                    Console.Error.WriteLine(e);
                 }
             }
         }
 
 
-        public static string[] ReadFromConsole(string promptMessage = "console",bool maskInput = false)
+        public static string[] ReadFromConsole(string promptMessage = "ojt",bool maskInput = false)
         {
             if (!maskInput)
             {
@@ -78,6 +78,7 @@ namespace OpenJiraTerminal
                     if(key.Key == ConsoleKey.Enter) break;
                     if (key.Key == ConsoleKey.Backspace)
                     {
+                        if (result.Count == 0) continue;
                         result.RemoveAt(result.Count - 1);
                         continue;
                     }
@@ -100,12 +101,18 @@ namespace OpenJiraTerminal
                     return AddUser(command);
                 case "addUsersFromFile":
                     return AddUsersFromFile(command);
+                case "createProject":
+                    return CreateProject(command);
+                case "getProjects":
+                    return GetProjectList(command);
+                case "assignProjectRole":
+                    return AddUserToProjectRole(command);
                 case "quit":
                 case "q":
                     QuitApplication();
                     break;
                 case "help":
-                    return PrintHelp();
+                    return PrintHelp(command);
             }
             return null;
         }
@@ -126,13 +133,22 @@ namespace OpenJiraTerminal
             }
         }
 
-        private static string BuildQueryString(Api api, string data = "")
+        private static string BuildQueryString(Api api, string[] data = null)
         {
             string apiResult = "";
             switch (api)
             {
                 case Api.addUser:
                     apiResult = "/rest/api/2/user";
+                    break;
+                case Api.createProject:
+                    apiResult = "/rest/project-templates/1.0/createshared/" + data[0];
+                    break;
+                case Api.getProjects:
+                    apiResult = "/rest/api/2/project";
+                    break;
+                case Api.assignProjectRole:
+                    apiResult = "/rest/api/2/project/" + data[0] + "/role/" + data[1];
                     break;
             }
             return connectionHandler.url + apiResult;
@@ -185,6 +201,34 @@ namespace OpenJiraTerminal
                 return "Failed to create users: " + failedUsers;
             }
         }
+        private static string CreateProject(string[] command)
+        {
+            CreateProjectJson createProjectJson = new CreateProjectJson(command[1], command[2], command[3]);
+            var response = connectionHandler.QueryServer(RequestType.POST, BuildQueryString(Api.createProject, new[] { command[4] }), jsonConverter.BuildJsonFromObject(createProjectJson));
+            return response;
+        }
+        private static string GetProjectList(string[] command)
+        {
+            var response = connectionHandler.QueryServer(RequestType.GET, BuildQueryString(Api.getProjects));
+            var result = (List<GetProjectsResponseJson>)jsonConverter.BuildObjectFromJson(JsonObjectType.GetProjectResponse, response);
+            foreach(GetProjectsResponseJson jsonObject in result)
+            {
+                Console.WriteLine("Name: " + jsonObject.name + " | " + "Key: " + jsonObject.key + " | " + "ID: " + jsonObject.id);
+            }
+            return "End of List.";
+        }
+
+        private static string AddUserToProjectRole(string[] command)
+        {
+            AssignProjectRoleJson roleJson = new AssignProjectRoleJson();
+            foreach (string strng in command)
+            {
+                if (strng == command[0] || strng == command[1] || strng == command[2]) continue;
+                roleJson.user.Add(strng);
+            }
+            var response = connectionHandler.QueryServer(RequestType.POST, BuildQueryString(Api.assignProjectRole, new[] { command[1], command[2] }),jsonConverter.BuildJsonFromObject(roleJson));
+            return response;
+        }
         #endregion
 
         #region login stuff
@@ -203,8 +247,9 @@ namespace OpenJiraTerminal
         }
 
         #region help messages
-        private static string PrintHelp()
+        private static string PrintHelp(string[] command)
         {
+
             Console.WriteLine("commands: ");
             Console.WriteLine("");
             Console.WriteLine("Connect to Jira server. Needs to be done BEFORE anythin else happens");
@@ -215,6 +260,12 @@ namespace OpenJiraTerminal
             Console.WriteLine("");
             Console.WriteLine("Add users from CSV File, needs to be separated with | pipe char, needs to be in the same order as addUser");
             Console.WriteLine("addUsersFromFile <path\to\file.csv>");
+            Console.WriteLine("");
+            Console.WriteLine("Create Project and copy permission schemes of specified project; also creates Board for this Project");
+            Console.WriteLine("createProject <key> <name> <lead> <project-id-to-copy-schemes-from>");
+            Console.WriteLine("");
+            Console.WriteLine("Assing a users to a specified project group in a project");
+            Console.WriteLine("assignProjectRole <project-key> <role-id> <username1> (<username2> <username3> ...)");
             Console.WriteLine("");
             Console.WriteLine("Quit the application");
             Console.WriteLine("quit / q");

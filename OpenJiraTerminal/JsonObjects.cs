@@ -4,6 +4,10 @@ using System.Text;
 
 namespace JsonObjects
 {
+    enum JsonObjectType
+    {
+        AddUserResponse,GetProjectResponse
+    }
     public class CreateUserJson
     {
         public CreateUserJson(string name, string password, string email, string displayName, string notification = "false")
@@ -31,5 +35,37 @@ namespace JsonObjects
         public string timeZone { get; set; }
         public string locale { get; set; }
         public string expand { get; set; }
+    }
+
+    public class CreateProjectJson
+    {
+        public CreateProjectJson(string key, string name, string lead)
+        {
+            this.key = key;
+            this.name = name;
+            this.lead = lead;
+        }
+        public string key { get; set; }
+        public string name { get; set; }
+        public string lead { get; set; }
+    }
+
+    public class GetProjectsResponseJson
+    {
+        public string expand { get; set; }
+        public string self { get; set; }
+        public string id { get; set; }
+        public string key { get; set; }
+        public string name { get; set; }
+        public string projectTypeKey { get; set; }
+    }
+
+    public class AssignProjectRoleJson
+    {
+        public List<string> user { get; set; }
+        public AssignProjectRoleJson()
+        {
+            user = new List<string>();
+        }
     }
 }
